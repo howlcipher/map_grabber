@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Grabber</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1 class="my-4">Map Grabber</h1>
+    <div class="mb-3">
+        <button id="fetch-maps" class="btn btn-primary">Fetch Maps</button>
+    </div>
+    <ul id="map-list" class="list-group"></ul>
+</div>
+
+<script>
+$(document).ready(function(){
+    $("#fetch-maps").click(function(){
+        $.get("/fetch_maps", function(data){
+            $("#map-list").empty();
+            data.forEach(function(map){
+                $("#map-list").append('<li class="list-group-item">' + map + ' <button class="btn btn-success btn-sm float-right download-button" data-filename="' + map + '">Download</button></li>');
+            });
+        });
+    });
+
+    $(document).on('click', '.download-button', function(){
+        var filename = $(this).data("filename");
+        $.get("/download/" + filename, function(data){
+            alert(data.status);
+        });
+    });
+});
+</script>
+</body>
+</html>

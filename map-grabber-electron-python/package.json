@@ -1,0 +1,40 @@
+{
+  "name": "map-grabber-electron-python",
+  "version": "1.0.0",
+  "description": "Map Grabber with Electron and Python",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "axios": "^0.21.1",
+    "electron": "^11.5.0",
+    "electron-builder": "^22.9.1"
+  },
+  "build": {
+    "appId": "com.deadweights.mapgrabber",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "python/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "author": "howlcipher",
+  "license": "your mom"
+}
