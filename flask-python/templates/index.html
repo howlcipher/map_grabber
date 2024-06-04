@@ -1,37 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Map Grabber</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Map Downloader</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .map-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+        }
+        .download-link {
+            margin-left: 10px;
+        }
+        .instructions {
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-<div class="container">
-    <h1 class="my-4">Map Grabber</h1>
-    <div class="mb-3">
-        <button id="fetch-maps" class="btn btn-primary">Fetch Maps</button>
+    <div class="container">
+        <h1 class="text-center">Available Maps</h1>
+        <div class="form-group">
+            <label for="download-directory">Select Download Directory:</label>
+            <input type="text" id="download-directory" class="form-control" value="C:/Program Files (x86)/Steam/steamapps/common/Left 4 Dead 2/left4dead2/addons" readonly>
+            <input type="file" id="directory-picker" webkitdirectory directory style="display:none;">
+            <button id="set-directory" class="btn btn-primary mt-2">Set Directory</button>
+        </div>
+        <p class="instructions">
+            To download a map, click the "Download" button. A link will appear allowing you to download the map manually.
+            Please save the file to the directory specified above.
+        </p>
+        <ul id="maps-list" class="list-unstyled"></ul>
     </div>
-    <ul id="map-list" class="list-group"></ul>
-</div>
 
-<script>
-$(document).ready(function(){
-    $("#fetch-maps").click(function(){
-        $.get("/fetch_maps", function(data){
-            $("#map-list").empty();
-            data.forEach(function(map){
-                $("#map-list").append('<li class="list-group-item">' + map + ' <button class="btn btn-success btn-sm float-right download-button" data-filename="' + map + '">Download</button></li>');
+    <script>
+        $(document).ready(function() {
+            let downloadDirectory = $('#download-directory').val();
+
+            // Handle the set directory button click
+            $('#set-directory').click(function() {
+                $('#directory-picker').click();
+            });
+
+            // Update the input field with the selected directory path
+            $('#directory-picker').change(function(event) {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    const filePath = files[0].webkitRelativePath;
+                    const directoryPath = filePath.split('/')[0]; // Extract the directory path
+                    const fullPath = `${event.target.webkitdirectory}/${directoryPath}`;
+                    $('#download-directory').val(fullPath);
+                    downloadDirectory = fullPath; // Update the downloadDirectory variable
+                    alert('Download directory set to: ' + downloadDirectory);
+                }
+            });
+
+            // Fetch the list of maps
+            $.getJSON('/fetch_maps', function(data) {
+                let list = $('#maps-list');
+                list.empty();
+                data.forEach(function(map) {
+                    let listItem = $('<li></li>').addClass('map-item');
+                    let mapName = $('<span></span>').text(map);
+                    let downloadButton = $('<button></button>')
+                        .addClass('btn btn-primary')
+                        .text('Download')
+                        .click(function() {
+                            // Start the download
+                            $.getJSON(`/download/${map}`, { directory: downloadDirectory }, function(response) {
+                                alert(response.status);
+                            });
+
+                            // Provide a direct download link
+                            let downloadLink = $('<a></a>')
+                                .addClass('btn btn-link download-link')
+                                .text('Click here to download manually')
+                                .attr('href', `/download_file/${map}?directory=${encodeURIComponent(downloadDirectory)}`)
+                                .attr('download', `${map}.zip`);
+                            
+                            listItem.append(downloadLink);
+                        });
+
+                    listItem.append(mapName).append(downloadButton);
+                    list.append(listItem);
+                });
             });
         });
-    });
-
-    $(document).on('click', '.download-button', function(){
-        var filename = $(this).data("filename");
-        $.get("/download/" + filename, function(data){
-            alert(data.status);
-        });
-    });
-});
-</script>
+    </script>
 </body>
 </html>

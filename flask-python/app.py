@@ -7,11 +7,6 @@ import threading
 
 app = Flask(__name__)
 
-# Directory to save downloaded files
-DOWNLOAD_DIRECTORY = 'downloads'
-if not os.path.exists(DOWNLOAD_DIRECTORY):
-    os.makedirs(DOWNLOAD_DIRECTORY)
-
 # Function to extract file name from URL
 def extract_filename(url):
     return os.path.basename(url).replace(".zip", "")
@@ -45,15 +40,26 @@ def fetch_maps():
     maps = sorted([extract_filename(link['href']) for link in zip_links])
     return jsonify(maps)
 
-@app.route('/download/<filename>')
+@app.route('/download/<filename>', methods=['GET'])
 def download(filename):
+    download_directory = request.args.get('directory', 'downloads')
+    
+    if not os.path.exists(download_directory):
+        os.makedirs(download_directory)
+    
     website_url = "http://spirit.hosted.nfoservers.com"
     download_link = f"{website_url}/{filename}.zip"
     
     # Download and unzip file in a separate thread
-    threading.Thread(target=download_and_unzip, args=(download_link, DOWNLOAD_DIRECTORY)).start()
+    threading.Thread(target=download_and_unzip, args=(download_link, download_directory)).start()
     
     return jsonify({"status": "Downloading"})
+
+@app.route('/download_file/<filename>')
+def download_file(filename):
+    download_directory = request.args.get('directory', 'downloads')
+    # Provide the direct download link for the zip file
+    return send_from_directory(download_directory, f"{filename}.zip", as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
