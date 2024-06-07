@@ -4,6 +4,7 @@ import urllib.request
 from zipfile import ZipFile
 from bs4 import BeautifulSoup
 import threading
+from werkzeug.utils import safe_join
 
 app = Flask(__name__)
 
@@ -55,10 +56,19 @@ def download(filename):
     
     return jsonify({"status": "Downloading"})
 
-@app.route('/download_file/<filename>')
+@app.route('/download_file/<filename>', methods=['GET'])
 def download_file(filename):
     download_directory = request.args.get('directory', 'downloads')
+    download_directory = os.path.abspath(download_directory)
+
+    if not os.path.exists(download_directory):
+        return jsonify({"error": "Directory does not exist"}), 404
+
     # Provide the direct download link for the zip file
+    file_path = safe_join(download_directory, f"{filename}.zip")
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
+    
     return send_from_directory(download_directory, f"{filename}.zip", as_attachment=True)
 
 if __name__ == '__main__':

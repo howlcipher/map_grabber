@@ -35,41 +35,14 @@
 <body>
     <div class="container">
         <h1 class="text-center">Available Maps</h1>
-        <div class="form-group">
-            <label for="download-directory">Select Download Directory:</label>
-            <input type="text" id="download-directory" class="form-control" value="C:/Program Files (x86)/Steam/steamapps/common/Left 4 Dead 2/left4dead2/addons" readonly>
-            <input type="file" id="directory-picker" webkitdirectory directory style="display:none;">
-            <button id="set-directory" class="btn btn-primary mt-2">Set Directory</button>
-        </div>
         <p class="instructions">
-            To download a map, click the "Download" button. A link will appear allowing you to download the map manually.
-            Please save the file to the directory specified above.
+            To download a map, click the "Download" button.
         </p>
         <ul id="maps-list" class="list-unstyled"></ul>
     </div>
 
     <script>
         $(document).ready(function() {
-            let downloadDirectory = $('#download-directory').val();
-
-            // Handle the set directory button click
-            $('#set-directory').click(function() {
-                $('#directory-picker').click();
-            });
-
-            // Update the input field with the selected directory path
-            $('#directory-picker').change(function(event) {
-                const files = event.target.files;
-                if (files.length > 0) {
-                    const filePath = files[0].webkitRelativePath;
-                    const directoryPath = filePath.split('/')[0]; // Extract the directory path
-                    const fullPath = `${event.target.webkitdirectory}/${directoryPath}`;
-                    $('#download-directory').val(fullPath);
-                    downloadDirectory = fullPath; // Update the downloadDirectory variable
-                    alert('Download directory set to: ' + downloadDirectory);
-                }
-            });
-
             // Fetch the list of maps
             $.getJSON('/fetch_maps', function(data) {
                 let list = $('#maps-list');
@@ -81,19 +54,14 @@
                         .addClass('btn btn-primary')
                         .text('Download')
                         .click(function() {
-                            // Start the download
-                            $.getJSON(`/download/${map}`, { directory: downloadDirectory }, function(response) {
-                                alert(response.status);
-                            });
-
-                            // Provide a direct download link
-                            let downloadLink = $('<a></a>')
-                                .addClass('btn btn-link download-link')
-                                .text('Click here to download manually')
-                                .attr('href', `/download_file/${map}?directory=${encodeURIComponent(downloadDirectory)}`)
-                                .attr('download', `${map}.zip`);
-                            
-                            listItem.append(downloadLink);
+                            // Prompt user to select download directory
+                            let downloadDirectory = prompt("Enter download directory:", "C:/Program Files (x86)/Steam/steamapps/common/Left 4 Dead 2/left4dead2/addons");
+                            if (downloadDirectory !== null) {
+                                // Start the download
+                                $.getJSON(`/download/${map}`, { directory: downloadDirectory }, function(response) {
+                                    alert(response.status);
+                                });
+                            }
                         });
 
                     listItem.append(mapName).append(downloadButton);
